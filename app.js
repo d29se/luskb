@@ -4,7 +4,9 @@ const express = require("express");
 const app = express();
 const services = require("./services");
 const controllers = require("./controllers");
+const cors = require("cors");
 
+app.use(cors());
 // Init API routes & controllers
 app.use(controllers);
 

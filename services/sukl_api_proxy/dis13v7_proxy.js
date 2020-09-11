@@ -5,6 +5,7 @@ const validators = require("../../validators");
 const https = require("https");
 const axios = require("axios");
 const fs = require("fs");
+const { response } = require("express");
 const api = axios.create({
   baseURL: "https://testapi.sukl.cz/dis13/v7",
   httpsAgent: new https.Agent({
@@ -209,4 +210,34 @@ exports.getReportID = async (workplaceID, year, month) => {
   const axiosConfig = await getAxiosConfig(method, url, certFile, certPass);
 
   return await axios(axiosConfig);
+};
+
+const yearlyReportsConfigs = async (year, workplace_id) => {
+  const axiosReqPromises = [];
+  const method = "GET";
+  const certFile = await loadCertPfx(certName);
+  const currentMonth = new Date().getMonth() + 1;
+
+  for (let month = 1; month <= currentMonth; month++) {
+    let url = `https://testapi.sukl.cz/dis13/v7/hlaseni/${workplace_id}/rok/${year}/mesic/${month}`;
+    let axiosConfig = await getAxiosConfig(method, url, certFile, certPass);
+    axiosReqPromises.push(axios(axiosConfig));
+  }
+  return axiosReqPromises;
+};
+const deconstructResponses = (responseList) => {
+  return responseList.map((reponseObj) => {
+    return {
+      report_id: reponseObj.data[0] ? reponseObj.data[0] : "",
+      url: reponseObj.config.url,
+      status: reponseObj.status,
+      month: reponseObj.config.url.slice(-1),
+    };
+  });
+};
+exports.getReportForYear = (year, workplace_id) => {
+  return yearlyReportsConfigs(year, workplace_id)
+    .then((promiseList) => Promise.all(promiseList))
+    .then((responses) => deconstructResponses(responses))
+    .catch((err) => console.log("getReportForYear", err));
 };

@@ -45,9 +45,9 @@ router.delete("/dis13v7", jsonParser, async (req, res, next) => {
 });
 
 // GET report
-router.get("/dis13v7", jsonParser, async (req, res, next) => {
+router.get("/dis13v7", async (req, res, next) => {
   await services.suklApiProxy.dis13v7
-    .getReport(req.body.report_id)
+    .getReport(req.query.report_id)
     .then((response) => {
       res.send(response.data);
     })
@@ -131,6 +131,18 @@ router.get("/dis13v7/getreportid", jsonParser, async (req, res, next) => {
         err.message = err.response.data.popisChyby;
         err.source = "SUKL";
       } catch {}
+      next(err);
+    });
+});
+
+// GET reports for whole year
+router.post("/dis13v7/reportsyearly", jsonParser, async (req, res, next) => {
+  await services.suklApiProxy.dis13v7
+    .getReportForYear(req.body.year, req.body.workplace_id)
+    .then((outputData) => {
+      res.send(outputData);
+    })
+    .catch((err) => {
       next(err);
     });
 });
